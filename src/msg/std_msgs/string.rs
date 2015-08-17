@@ -1,12 +1,12 @@
 use std::string::String as std_String;
-use std::old_io::Reader;
+use std::io::Read;
 
 pub struct String {
     pub data: std_String,
 }
 
 impl String {
-    pub fn from_stream<R: Reader>(stream : &mut R) -> Result<String, std_String> {
+    pub fn from_stream<R: Read>(stream : &mut R) -> Result<String, std_String> {
         let string_size = match stream.read_le_u32() {
             Ok(string_size) => string_size,
             Err(_) => return Err("Failed to read string length".to_string()),

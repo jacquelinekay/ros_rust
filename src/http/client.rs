@@ -1,4 +1,5 @@
-use std::old_io::TcpStream;
+use std::io::Read;
+use std::net::TcpStream;
 use http::ResponseHeader;
 
 fn create_http_post(body: &str) -> String {
@@ -10,7 +11,7 @@ fn create_http_post(body: &str) -> String {
         Content-Length: {content_length}\n\n{body}", content_length=body.len(), body=body)
 }
 
-fn read_http_response_header<R: Reader>(stream: &mut R) -> Result<ResponseHeader, String> {
+fn read_http_response_header<R: Read>(stream: &mut R) -> Result<ResponseHeader, String> {
     let mut header = ResponseHeader {status: -1, content_length: -1};
 
     // Read until finding empty line at end of header
@@ -61,7 +62,7 @@ fn read_http_response_header<R: Reader>(stream: &mut R) -> Result<ResponseHeader
 }
 
 /// Read an HTTP response from a stream.
-fn read_http_response<R: Reader>(stream: &mut R) -> Result<(ResponseHeader, String), String> {
+fn read_http_response<R: Read>(stream: &mut R) -> Result<(ResponseHeader, String), String> {
     let header = match read_http_response_header(stream) {
         Ok(h) => h,
         Err(e) => return Err(format!("Error reading header: {}", e)),
@@ -112,7 +113,7 @@ pub fn post(server_uri: &str, body: &str) -> Result<(ResponseHeader, String), St
 #[cfg(test)]
 mod tests {
     use http::ResponseHeader;
-    use std::old_io::MemReader;
+    use std::io::MemReader;
 
     #[test]
     fn test_parse_response_header() {

@@ -1,14 +1,14 @@
-use std::old_io::{TcpListener, TcpStream};
-use std::old_io::{Acceptor, Listener};
+use std::io::Read;
+use std::net::{TcpListener, TcpStream};
 use http::RequestHeader;
-use std::sync::TaskPool;
+use threadpool::ThreadPool;
 
 pub fn run_http_server<H: HandlesHttpRequests>(
     listener: TcpListener,
     num_threads: usize,
     request_handler: H,
     ) -> Result<(), String> {
-    let pool = TaskPool::new(num_threads);
+    let pool = ThreadPool::new(num_threads);
 
     let mut acceptor = match listener.listen() {
         Ok(x) => x,
@@ -55,7 +55,7 @@ fn create_http_response(status: i32, body: &str) -> String {
         Content-Type: text/xml\n\n{body}", status=status, content_length=body.len(), body=body)
 }
 
-fn read_http_request_header<R: Reader>(stream: &mut R) -> Result<RequestHeader, String> {
+fn read_http_request_header<R: Read>(stream: &mut R) -> Result<RequestHeader, String> {
     let mut header = RequestHeader {
         method: "".to_string(),
         request_uri: "".to_string(),
@@ -111,7 +111,7 @@ fn read_http_request_header<R: Reader>(stream: &mut R) -> Result<RequestHeader, 
 }
 
 /// Read an HTTP request from a stream.
-fn read_http_request<R: Reader>(stream: &mut R) -> Result<(RequestHeader, String), String> {
+fn read_http_request<R: Read>(stream: &mut R) -> Result<(RequestHeader, String), String> {
     let header = match read_http_request_header(stream) {
         Ok(h) => h,
         Err(e) => return Err(format!("Error reading header: {}", e)),
@@ -150,7 +150,7 @@ pub trait HandlesHttpRequests: Sync + Send + Clone {
 #[cfg(test)]
 mod tests {
     use http::RequestHeader;
-    use std::old_io::MemReader;
+    use std::io::MemReader;
 
     #[test]
     fn test_parse_request_header() {

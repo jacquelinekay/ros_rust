@@ -2,12 +2,13 @@
 #![feature(io)]
 
 #![feature(plugin)]
-#[plugin] #[no_link]
-extern crate regex_macros;
+#![plugin(regex_macros)]
 extern crate regex;
 
 #[macro_use]
 extern crate log;
+
+extern crate threadpool;
 
 pub mod msg;
 pub mod http;

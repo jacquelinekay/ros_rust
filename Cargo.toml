@@ -1,14 +1,10 @@
 [package]
 name = "ros_rust"
-version = "0.1.0"
-authors = [ "Jon Binney <jon.binney@gmail.com>" ]
+version = "0.2.0"
+authors = [ "Jon Binney <jon.binney@gmail.com>", "Jackie Kay <jacquelinekay1@gmail.com" ]
 
-[dependencies.regex]
-git = "https://github.com/rust-lang/regex"
-
-[dependencies.regex_macros]
-git = "https://github.com/rust-lang/regex"
-
-[dependencies.log]
-git = "https://github.com/rust-lang/log"
-
+[dependencies]
+regex = "0.1.41"
+regex_macros = "0.1.21"
+log = "0.3"
+threadpool = "0.1.4"
