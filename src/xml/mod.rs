@@ -8,6 +8,8 @@
 //! and match the XML spec: http://www.w3.org/TR/REC-xml/
 
 use regex;
+use std::borrow::Borrow;
+use std::io::Write;
 
 /// An XML element. An element in an XML document is defined by a start and
 /// end tag, and may have text or other elements inside of it. There is also
@@ -123,16 +125,16 @@ fn parse_element(input_str: &str) -> Result<(Element, &str), String> {
 }
 
 pub fn serialize_xml(element: &Element) -> String {
-    "<?xml version=\"1.0\"?>\n".to_string() + serialize_element(element).as_slice()
+    "<?xml version=\"1.0\"?>\n".to_string() + serialize_element(element).borrow()
 }
 
 fn serialize_element(element: &Element) -> String {
     let mut result = format!("<{}>{}", element.name, element.text);
 
     for child_element in element.children.iter() {
-        result = result + serialize_element(child_element).as_slice();
+        result = result + serialize_element(child_element).borrow();
     }
-    result = result + format!("</{}>", element.name).as_slice();
+    result = result + format!("</{}>", element.name).borrow();
 
     result
 }
@@ -175,7 +177,8 @@ fn get_text_token(input_str: &str) -> Option<(Token, &str)> {
 fn get_remaining_string<'a>(caps: &regex::Captures, input_str: &'a str) -> &'a str {
     match caps.pos(0) {
         None => panic!("Unexpected empty capture group"),
-        Some((_, end_i)) => input_str.slice_from(end_i)
+        //Some((_, end_i)) => input_str.slice_from(end_i)
+        Some((_, end_i)) => input_str.slice_unchecked(end_i, input_str.len())
     }
 }
 

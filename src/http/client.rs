@@ -1,4 +1,6 @@
 use std::io::Read;
+use std::io::Write;
+use std::borrow::Borrow;
 use std::net::TcpStream;
 use http::ResponseHeader;
 
@@ -24,7 +26,7 @@ fn read_http_response_header<R: Read>(stream: &mut R) -> Result<ResponseHeader, 
         };
         header_str.push(b as char);
         if header_str.len() >= 4 {
-            if header_str.as_slice()[header_str.len()-4..] == *"\r\n\r\n".as_slice() {
+            if header_str.borrow()[header_str.len()-4..] == *"\r\n\r\n".borrow() {
                 done = true;
             }
         }
@@ -32,7 +34,7 @@ fn read_http_response_header<R: Read>(stream: &mut R) -> Result<ResponseHeader, 
 
     // Parse the status line
     let status_line_re = regex!("^(.+) (.+) (.+)\n");
-    let caps = match status_line_re.captures(header_str.as_slice()) {
+    let caps = match status_line_re.captures(header_str.borrow()) {
         None => return Err("Bad status line in response header".to_string()),
         Some(caps) => caps,
     };
@@ -46,7 +48,7 @@ fn read_http_response_header<R: Read>(stream: &mut R) -> Result<ResponseHeader, 
 
     // Look for the Content-Length
     let content_length_re = regex!("(?i)Content-Length: ([0-9]+)\r\n");
-    let caps = match content_length_re.captures(header_str.as_slice()) {
+    let caps = match content_length_re.captures(header_str.borrow()) {
         None => return Err(format!("Header missing Content-Length field:\n{}", header_str)),
         Some(caps) => caps,
     };

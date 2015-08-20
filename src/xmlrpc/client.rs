@@ -1,4 +1,5 @@
 use http::post;
+use std::borrow::Borrow;
 use xmlrpc::parser;
 use xmlrpc::{Request, Response, Value};
 
@@ -13,9 +14,9 @@ impl Client {
             Ok(r) => r,
         };
 
-        match post(self.server_uri.as_slice(), request_str.as_slice()) {
+        match post(self.server_uri.borrow(), request_str.borrow()) {
             Err(err) => Err(err),
-            Ok((_, response_body)) => match parser::parse_response(response_body.as_slice()) {
+            Ok((_, response_body)) => match parser::parse_response(response_body.borrow()) {
                 Ok(response) => Ok(response),
                 Err(err) => Err(err)
             },
@@ -29,7 +30,7 @@ fn serialize_request(request: &Request) -> Result<String, String> {
         match param {
             &Value::String(ref val) => {
                 param_str = param_str + format!(
-                  "<param><value><string>{}</string></value></param>", val).as_slice();
+                  "<param><value><string>{}</string></value></param>", val).borrow();
             },
             other_val => return Err(format!("Don't know how to serialize XMLRPC value {:?}", other_val)),
         };

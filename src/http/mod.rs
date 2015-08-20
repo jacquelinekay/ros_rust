@@ -4,7 +4,7 @@ pub use self::client::post;
 mod server;
 mod client;
 
-#[derive(Debug, PartialEq, Copy)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub struct ResponseHeader {
     status: i32,
     content_length: isize,

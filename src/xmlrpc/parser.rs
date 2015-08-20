@@ -1,3 +1,4 @@
+use std::borrow::Borrow;
 use xml;
 use xmlrpc::{Value, Request, Response};
 
@@ -32,11 +33,11 @@ fn parse_array_data(element: &xml::Element) -> Result<Value, String> {
 
 /// Parse an XMLRPC data element (e.g. <string>, <int> ...)
 fn parse_value_data(element: &xml::Element) -> Result<Value, String> {
-    match element.name.as_slice() {
-        "i4" => parse_int(element.text.as_slice()),
-        "int" => parse_int(element.text.as_slice()),
+    match element.name.borrow() {
+        "i4" => parse_int(element.text.borrow()),
+        "int" => parse_int(element.text.borrow()),
         //"boolean" => parse_boolean(data_element.text),
-        "string" => parse_string(element.text.as_slice()),
+        "string" => parse_string(element.text.borrow()),
         //"double" => parse_double(element.text),
         "array" => parse_array(element),
         // Currently not handling dateTime.iso8601 base64 or struct types
@@ -46,7 +47,7 @@ fn parse_value_data(element: &xml::Element) -> Result<Value, String> {
 
 /// Parse an XMLRPC <value> element
 fn parse_value(element: &xml::Element) -> Result<Value, String> {
-    match element.name.as_slice() {
+    match element.name.borrow() {
         "value" => match element.children.len() {
             1 => parse_value_data(&element.children[0]),
             x => Err(format!("Bad number of children for <value> element ({})", x)),
@@ -57,7 +58,7 @@ fn parse_value(element: &xml::Element) -> Result<Value, String> {
 
 /// Parse an XMLRPC <param> element
 fn parse_param(element: &xml::Element) -> Result<Value, String> {
-    match element.name.as_slice() {
+    match element.name.borrow() {
         "param" => match element.children.len() {
             1 => parse_value(&element.children[0]),
             x => Err(format!("Bad number of children for <param> element ({})", x)),
@@ -77,7 +78,7 @@ pub fn parse_request(request_str: &str) -> Result<Request, String> {
     let mut found_method_name = false;
     let mut request = Request {method_name: "".to_string(), params: vec![]};
     for child in request_element.children.iter() {
-        match child.name.as_slice() {
+        match child.name.borrow() {
             "methodName" => {
                 found_method_name = true;
                 request.method_name = child.text.clone();

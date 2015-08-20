@@ -1,4 +1,6 @@
+use std::borrow::Borrow;
 use std::io::Read;
+use std::io::Write;
 use std::net::{TcpListener, TcpStream};
 use http::RequestHeader;
 use threadpool::ThreadPool;
@@ -10,12 +12,14 @@ pub fn run_http_server<H: HandlesHttpRequests>(
     ) -> Result<(), String> {
     let pool = ThreadPool::new(num_threads);
 
-    let mut acceptor = match listener.listen() {
+    /*
+    let mut acceptor = match listener.accept() {
         Ok(x) => x,
         Err(_) => return Err("Failed to create connection acceptor".to_string()),
     };
+    */
 
-    for stream in acceptor.incoming() {
+    for stream in listener.incoming() {
         debug!("Got HTTP connection");
         let handler_clone = request_handler.clone();
         match stream {
@@ -35,9 +39,9 @@ fn handle_incoming_request<H: HandlesHttpRequests>(
 {
     match read_http_request(&mut stream) {
         Ok((header, body)) => {
-            let (response_status, response_body) = request_handler.handle_request(&header, body.as_slice());
-            let http_response = create_http_response(response_status, response_body.as_slice());
-            debug!("Sending response:\n{}", http_response.as_slice());
+            let (response_status, response_body) = request_handler.handle_request(&header, body.borrow());
+            let http_response = create_http_response(response_status, response_body.borrow());
+            debug!("Sending response:\n{}", http_response.borrow());
             match stream.write(http_response.as_bytes()) {
                 Ok(_) => (),
                 Err(_) => {warn!("Failed to write response");},
@@ -72,7 +76,7 @@ fn read_http_request_header<R: Read>(stream: &mut R) -> Result<RequestHeader, St
         };
         header_str.push(b as char);
         if header_str.len() >= 4 {
-            if header_str.as_slice()[header_str.len()-4..] == *"\r\n\r\n".as_slice() {
+            if header_str.borrow()[header_str.len()-4..] == *"\r\n\r\n".borrow() {
                 done = true;
             }
         }
@@ -81,7 +85,7 @@ fn read_http_request_header<R: Read>(stream: &mut R) -> Result<RequestHeader, St
 
     // Parse request line
     let request_line_re = regex!("^(.+) (.+) (.+)\r\n");
-    match request_line_re.captures(header_str.as_slice()) {
+    match request_line_re.captures(header_str.borrow()) {
         None => return Err("Unable to parse header request line".to_string()),
         Some(caps) => {
             header.method = caps.at(1).unwrap().to_string();
@@ -91,9 +95,9 @@ fn read_http_request_header<R: Read>(stream: &mut R) -> Result<RequestHeader, St
     };
 
     // Look for the Content-Length if this is a POST
-    if header.method.as_slice() == "POST" {
+    if header.method.borrow() == "POST" {
         let content_length_re = regex!("(?i)Content-Length: ([0-9]+)\r\n");
-        match content_length_re.captures(header_str.as_slice()) {
+        match content_length_re.captures(header_str.borrow()) {
             None => return Err("Header missing Content-Length field".to_string()),
             Some(caps) => {
                 header.content_length = match caps.at(1) {
