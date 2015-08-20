@@ -20,7 +20,7 @@ fn read_http_response_header<R: Read>(stream: &mut R) -> Result<ResponseHeader, 
     let mut header_str = String::new();
     let mut done = false;
     while !done {
-        let b = match stream.read_byte() {
+        let b = match stream.byte() {
             Ok(b) => b,
             Err(_) => return Err("Failed to read response header from stream".to_string()),
         };
